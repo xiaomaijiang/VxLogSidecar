@@ -14,7 +14,6 @@
 #include <apr_thread_proc.h>
 
 #define CRLF_STR "\r\n"
-#define INTERVAL 1
 
 typedef struct watcher_conf_t
 {
@@ -24,6 +23,7 @@ typedef struct watcher_conf_t
     char *shutdown_script_path;
     char *conf_path;
     char *pid_path;
+    int interval;
     apr_port_t port;
 } watcher_conf_t;
 
@@ -98,7 +98,7 @@ int on_body(http_parser *_, const char *at, size_t length)
         {
             if (strcmp(str, at) == 0)
             {
-                printf("远程配置文件和本地配置文件相等，不做任何操作\n");
+                // printf("远程配置文件和本地配置文件相等，不做任何操作\n");
             }
             else
             {
@@ -119,8 +119,8 @@ int on_body(http_parser *_, const char *at, size_t length)
                 }
                 apr_file_close(conf_file);
 
-                printf("启动客户端\n");
-                system(watcher_conf.startup_script_path);
+                // printf("启动客户端\n");
+                // system(watcher_conf.startup_script_path);
             }
         }
     }
@@ -163,13 +163,10 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
 {
     while (1)
     {
-        printf("获取客户端最新的配置\n");
-
         rv = do_connect(&s, mp);
 
         if (rv == APR_SUCCESS)
         {
-            printf("请求服务器成功\n");
             rv = do_client_task(s, watcher_conf.url_path, mp);
             if (rv != APR_SUCCESS)
             {
@@ -180,7 +177,7 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
         {
             printf("请求服务器失败，服务没有开启\n");
         }
-        apr_sleep(INTERVAL * APR_USEC_PER_SEC);
+        apr_sleep(watcher_conf.interval * APR_USEC_PER_SEC);
         apr_socket_close(s);
     }
 }
@@ -189,7 +186,6 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
 {
     while (1)
     {
-        printf("检查客户端是否存活\n");
         apr_status_t rv;
         apr_file_t *pid_file = NULL;
 
@@ -197,15 +193,11 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
                                APR_FOPEN_READ,
                                APR_UREAD | APR_UWRITE | APR_GREAD, mp) != APR_SUCCESS)
         {
-            printf("启动客户端\n");
+            printf("客户端未启动，启动客户端\n");
             system(watcher_conf.startup_script_path);
         }
-        else
-        {
-            printf("客户端存活，不作操作\n");
-        }
 
-        apr_sleep(INTERVAL * APR_USEC_PER_SEC);
+        apr_sleep(60 * APR_USEC_PER_SEC);
     }
 }
 int main(int argc, char const *argv[])
@@ -227,6 +219,8 @@ int main(int argc, char const *argv[])
     watcher_conf.shutdown_script_path = iniparser_getstring(ini, "main:shutdown_scirpt_path", NULL);
     watcher_conf.conf_path = iniparser_getstring(ini, "main:vxlog_config_path", NULL);
     watcher_conf.pid_path = iniparser_getstring(ini, "main:vxlog_pid_path", NULL);
+    watcher_conf.interval = iniparser_getint(ini, "main:interval", NULL);
+
     atexit(exit_action);
 
     apr_initialize();
