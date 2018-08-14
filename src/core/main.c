@@ -74,53 +74,56 @@ static apr_status_t do_connect(apr_socket_t **sock, apr_pool_t *mp)
     return APR_SUCCESS;
 }
 
-int on_body(http_parser *_, const char *at, size_t length)
+int on_body(http_parser *parse, const char *at, size_t length)
 {
-    printf("Body: %s\n", at);
-    apr_status_t rv;
-    apr_file_t *conf_file = NULL;
-
-    apr_size_t nbytes = 256;
-    char *str = apr_pcalloc(mp, nbytes + 1);
-
-    if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
-                           APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_CREATE,
-                           APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
+    if (parse->status_code == 200)
     {
-        rv = apr_file_read(conf_file, str, &nbytes);
 
-        apr_file_close(conf_file);
-        if (rv != APR_SUCCESS)
+        apr_status_t rv;
+        apr_file_t *conf_file = NULL;
+
+        apr_size_t nbytes = 256;
+        char *str = apr_pcalloc(mp, nbytes + 1);
+
+        if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
+                               APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_CREATE,
+                               APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
         {
-            printf("读取本地配置文件异常\n");
-        }
-        else
-        {
-            if (strcmp(str, at) == 0)
+            rv = apr_file_read(conf_file, str, &nbytes);
+
+            apr_file_close(conf_file);
+            if (rv != APR_SUCCESS)
             {
-                // printf("远程配置文件和本地配置文件相等，不做任何操作\n");
+                printf("读取本地配置文件异常\n");
             }
             else
             {
-                printf("停止客户端\n");
-                system(watcher_conf.shutdown_script_path);
-
-                printf("配置文件变更，更新配置文件内容:%s,%s\n", str, at);
-                if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
-                                       APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
-                                       APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
+                if (strcmp(str, at) == 0)
                 {
-                    rv = apr_file_write(conf_file, at, &length);
-                    printf("配置文件更新成功\n");
+                    // printf("远程配置文件和本地配置文件相等，不做任何操作\n");
                 }
                 else
                 {
-                    printf("更新配置文件失败\n");
-                }
-                apr_file_close(conf_file);
+                    printf("停止客户端\n");
+                    system(watcher_conf.shutdown_script_path);
 
-                // printf("启动客户端\n");
-                // system(watcher_conf.startup_script_path);
+                    printf("配置文件变更，更新配置文件内容:%s,%s\n", str, at);
+                    if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
+                                           APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
+                                           APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
+                    {
+                        rv = apr_file_write(conf_file, at, &length);
+                        printf("配置文件更新成功\n");
+                    }
+                    else
+                    {
+                        printf("更新配置文件失败\n");
+                    }
+                    apr_file_close(conf_file);
+
+                    // printf("启动客户端\n");
+                    // system(watcher_conf.startup_script_path);
+                }
             }
         }
     }
