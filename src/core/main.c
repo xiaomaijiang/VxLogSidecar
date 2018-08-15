@@ -1,3 +1,5 @@
+#include "main.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,18 +16,6 @@
 #include <apr_thread_proc.h>
 
 #define CRLF_STR "\r\n"
-
-typedef struct watcher_conf_t
-{
-    char *host;
-    char *url_path;
-    char *startup_script_path;
-    char *shutdown_script_path;
-    char *conf_path;
-    char *pid_path;
-    int interval;
-    apr_port_t port;
-} watcher_conf_t;
 
 watcher_conf_t watcher_conf;
 
@@ -100,7 +90,7 @@ int on_body(http_parser *parse, const char *at, size_t length)
             {
                 if (strcmp(str, at) == 0)
                 {
-                    printf("远程配置文件和本地配置文件相等，不做任何操作\n");
+                    // printf("远程配置文件和本地配置文件相等，不做任何操作\n");
                 }
                 else
                 {
@@ -120,9 +110,6 @@ int on_body(http_parser *parse, const char *at, size_t length)
                         printf("更新配置文件失败\n");
                     }
                     apr_file_close(conf_file);
-
-                    // printf("启动客户端\n");
-                    // system(watcher_conf.startup_script_path);
                 }
             }
         }
