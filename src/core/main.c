@@ -82,9 +82,9 @@ int on_body(http_parser *parse, const char *at, size_t length)
         apr_status_t rv;
         apr_file_t *conf_file = NULL;
 
-        apr_size_t nbytes = 256;
+        apr_size_t nbytes = 4096;
         char *str = apr_pcalloc(mp, nbytes + 1);
-
+       
         if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_CREATE,
                                APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
@@ -100,14 +100,14 @@ int on_body(http_parser *parse, const char *at, size_t length)
             {
                 if (strcmp(str, at) == 0)
                 {
-                    // printf("远程配置文件和本地配置文件相等，不做任何操作\n");
+                    printf("远程配置文件和本地配置文件相等，不做任何操作\n");
                 }
                 else
                 {
                     printf("停止客户端\n");
                     system(watcher_conf.shutdown_script_path);
 
-                    printf("配置文件变更，更新配置文件内容:%s,%s\n", str, at);
+                    printf("配置文件变更，更新配置文件内容\n");
                     if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                            APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
                                            APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
