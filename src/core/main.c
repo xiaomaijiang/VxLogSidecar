@@ -15,6 +15,7 @@
 #include <apr_file_io.h>
 #include <apr_thread_proc.h>
 
+#include <apr_getopt.h>
 #define CRLF_STR "\r\n"
 
 watcher_conf_t watcher_conf;
@@ -74,7 +75,7 @@ int on_body(http_parser *parse, const char *at, size_t length)
 
         apr_size_t nbytes = 4096;
         char *str = apr_pcalloc(mp, nbytes + 1);
-       
+
         if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_CREATE,
                                APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
@@ -84,30 +85,29 @@ int on_body(http_parser *parse, const char *at, size_t length)
             apr_file_close(conf_file);
             if (rv != APR_SUCCESS)
             {
-                printf("读取本地配置文件异常\n");
+                printf("read local config failed\n");
             }
             else
             {
                 if (strcmp(str, at) == 0)
                 {
-                    // printf("远程配置文件和本地配置文件相等，不做任何操作\n");
                 }
                 else
                 {
-                    printf("停止客户端\n");
+                    printf("start VxLog\n");
                     system(watcher_conf.shutdown_script_path);
 
-                    printf("配置文件变更，更新配置文件内容\n");
+                    printf("config is changed,upgrade local VxLOG config\n");
                     if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                            APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
                                            APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
                     {
                         rv = apr_file_write(conf_file, at, &length);
-                        printf("配置文件更新成功\n");
+                        printf("Upgrade local config success\n");
                     }
                     else
                     {
-                        printf("更新配置文件失败\n");
+                        printf("Upgrade local config failed\n");
                     }
                     apr_file_close(conf_file);
                 }
@@ -160,12 +160,12 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
             rv = do_client_task(s, watcher_conf.url_path, mp);
             if (rv != APR_SUCCESS)
             {
-                printf("请求客户端最新配置失败\n");
+                printf("Request latest VxLog Config failed\n");
             }
         }
         else
         {
-            printf("请求服务器失败，服务没有开启\n");
+            printf("Connect Server fail\n");
         }
         apr_sleep(watcher_conf.interval * APR_USEC_PER_SEC);
         apr_socket_close(s);
@@ -183,23 +183,51 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
                                APR_FOPEN_READ,
                                APR_UREAD | APR_UWRITE | APR_GREAD, mp) != APR_SUCCESS)
         {
-            printf("客户端未启动，启动客户端\n");
+            printf("VxLog is not started ,start VxLOG\n");
             system(watcher_conf.startup_script_path);
         }
 
         apr_sleep(60 * APR_USEC_PER_SEC);
     }
 }
-int main(int argc, char const *argv[])
+int main(int argc, const char *const *argv, const char *const *env)
 {
-    if (argc != 2)
+    apr_status_t apr_init_status = apr_app_initialize(&argc, &argv, &env);
+    if (!(apr_init_status == APR_SUCCESS))
     {
-        printf("请指定配置文件路径\n");
+        printf("init apr app fail");
+    }
+    apr_initialize();
+    apr_pool_create(&mp, NULL);
+
+    char *config_path;
+    apr_getopt_t *opt;
+    apr_status_t rv;
+    char ch;
+    const char *optarg;
+    rv = apr_getopt_init(&opt, mp, argc, argv);
+
+    while (apr_getopt(opt, "c:", &ch, &optarg) == APR_SUCCESS)
+    {
+        switch (ch)
+        {
+        case 'c':
+            config_path = optarg;
+            printf("Config Path is :%s", optarg);
+            break;
+        default:
+            break;
+        }
+    }
+    
+    if (config_path == NULL)
+    {
+        printf("Please Specified the config path\n");
         exit(-1);
     }
 
-    printf("初始化配置信息\n");
-    ini = iniparser_load(argv[1]);
+    printf("init config properties\n");
+    ini = iniparser_load(config_path);
     iniparser_dump(ini, stderr);
 
     watcher_conf.host = iniparser_getstring(ini, "main:host", NULL);
@@ -213,8 +241,6 @@ int main(int argc, char const *argv[])
 
     atexit(exit_action);
 
-    apr_initialize();
-    apr_pool_create(&mp, NULL);
     apr_thread_t *thd_arr[2];
     apr_threadattr_t *thd_attr;
     apr_threadattr_create(&thd_attr, mp);
