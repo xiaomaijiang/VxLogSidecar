@@ -34,7 +34,7 @@ static apr_status_t do_connect(apr_socket_t **sock, apr_pool_t *mp)
     apr_status_t rv;
 
     rv = apr_sockaddr_info_get(&sa, watcher_conf.host, APR_INET, watcher_conf.port, 0, mp);
-    if (rv != APR_SUCCESS)
+    if (apr_sockaddr_info_get(&sa, watcher_conf.host, APR_INET, watcher_conf.port, 0, mp) != APR_SUCCESS)
     {
         return rv;
     }
@@ -80,7 +80,7 @@ int on_body(http_parser *parse, const char *at, size_t length)
             apr_file_close(conf_file);
             if (rv != APR_SUCCESS)
             {
-                umr_log("read local config failed",boot.mp);
+                umr_log("read local config failed", boot.mp);
             }
             else
             {
@@ -171,6 +171,7 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
 {
     while (1)
     {
+        apr_sleep(60 * APR_USEC_PER_SEC);
         apr_status_t rv;
         apr_file_t *pid_file = NULL;
 
@@ -178,11 +179,9 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
                                APR_FOPEN_READ,
                                APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) != APR_SUCCESS)
         {
-            umr_log("VxLog is not started ,start VxLOG",boot.mp);
+            umr_log("VxLog is not started ,start VxLOG", boot.mp);
             system(watcher_conf.startup_script_path);
         }
-
-        apr_sleep(60 * APR_USEC_PER_SEC);
     }
 }
 
@@ -201,17 +200,8 @@ void args_init_callback(char ch, const char *optarg)
     }
 }
 
-int main(int argc, const char *const *argv, const char *const *env)
+void init_config()
 {
-    boot_app(&boot, argc, argv, env);
-    args_init(boot.mp, "c:", argc, argv, args_init_callback);
-    if (config_path == NULL)
-    {
-        umr_log("Please Specified the config path", boot.mp);
-        exit(-1);
-    }
-    umr_log("init config properties", boot.mp);
-
     ini = iniparser_load(config_path);
     iniparser_dump(ini, stderr);
 
@@ -223,6 +213,20 @@ int main(int argc, const char *const *argv, const char *const *env)
     watcher_conf.conf_path = iniparser_getstring(ini, "main:vxlog_config_path", NULL);
     watcher_conf.pid_path = iniparser_getstring(ini, "main:vxlog_pid_path", NULL);
     watcher_conf.interval = iniparser_getint(ini, "main:interval", NULL);
+}
+
+int main(int argc, const char *const *argv, const char *const *env)
+{
+    boot_app(&boot, argc, argv, env);
+    args_init(boot.mp, "c:", argc, argv, args_init_callback);
+
+    if (config_path == NULL)
+    {
+        umr_log("Please Specified the config path", boot.mp);
+        exit(-1);
+    }
+
+    umr_log("init config properties", boot.mp);
 
     apr_thread_t *thd_arr[2];
     apr_threadattr_t *thd_attr;
