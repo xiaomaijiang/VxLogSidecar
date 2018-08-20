@@ -14,23 +14,18 @@
 #include <apr_strings.h>
 #include <apr_file_io.h>
 #include <apr_thread_proc.h>
-
+#include "boot.h"
 #include <apr_getopt.h>
 #define CRLF_STR "\r\n"
 
 watcher_conf_t watcher_conf;
 
 apr_status_t rv;
-apr_pool_t *mp;
+umr_boot_t boot;
 apr_socket_t *s;
 
 dictionary *ini;
-
-void exit_action()
-{
-    iniparser_freedict(ini);
-    apr_terminate();
-}
+char *config_path;
 
 static apr_status_t do_connect(apr_socket_t **sock, apr_pool_t *mp)
 {
@@ -74,11 +69,11 @@ int on_body(http_parser *parse, const char *at, size_t length)
         apr_file_t *conf_file = NULL;
 
         apr_size_t nbytes = 4096;
-        char *str = apr_pcalloc(mp, nbytes + 1);
+        char *str = apr_pcalloc(boot.mp, nbytes + 1);
 
         if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_CREATE,
-                               APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
+                               APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
         {
             rv = apr_file_read(conf_file, str, &nbytes);
 
@@ -100,7 +95,7 @@ int on_body(http_parser *parse, const char *at, size_t length)
                     printf("config is changed,upgrade local VxLOG config\n");
                     if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                            APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
-                                           APR_UREAD | APR_UWRITE | APR_GREAD, mp) == APR_SUCCESS)
+                                           APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
                     {
                         rv = apr_file_write(conf_file, at, &length);
                         printf("Upgrade local config success\n");
@@ -153,11 +148,11 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
 {
     while (1)
     {
-        rv = do_connect(&s, mp);
+        rv = do_connect(&s, boot.mp);
 
         if (rv == APR_SUCCESS)
         {
-            rv = do_client_task(s, watcher_conf.url_path, mp);
+            rv = do_client_task(s, watcher_conf.url_path, boot.mp);
             if (rv != APR_SUCCESS)
             {
                 printf("Request latest VxLog Config failed\n");
@@ -181,7 +176,7 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
 
         if (rv = apr_file_open(&pid_file, watcher_conf.pid_path,
                                APR_FOPEN_READ,
-                               APR_UREAD | APR_UWRITE | APR_GREAD, mp) != APR_SUCCESS)
+                               APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) != APR_SUCCESS)
         {
             printf("VxLog is not started ,start VxLOG\n");
             system(watcher_conf.startup_script_path);
@@ -190,36 +185,27 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
         apr_sleep(60 * APR_USEC_PER_SEC);
     }
 }
+
+void args_init_callback(char ch, const char *optarg)
+{
+    switch (ch)
+    {
+    case 'c':
+        config_path = optarg;
+        printf("Config Path is :%s\n", optarg);
+        break;
+    case 'd':
+        break;
+    default:
+        break;
+    }
+}
+
 int main(int argc, const char *const *argv, const char *const *env)
 {
-    apr_status_t apr_init_status = apr_app_initialize(&argc, &argv, &env);
-    if (!(apr_init_status == APR_SUCCESS))
-    {
-        printf("init apr app fail");
-    }
-    apr_initialize();
-    apr_pool_create(&mp, NULL);
+    boot_app(&boot, argc, argv, env);
+    args_init(boot.mp, "c:", argc, argv, args_init_callback);
 
-    char *config_path;
-    apr_getopt_t *opt;
-    apr_status_t rv;
-    char ch;
-    const char *optarg;
-    rv = apr_getopt_init(&opt, mp, argc, argv);
-
-    while (apr_getopt(opt, "c:", &ch, &optarg) == APR_SUCCESS)
-    {
-        switch (ch)
-        {
-        case 'c':
-            config_path = optarg;
-            printf("Config Path is :%s", optarg);
-            break;
-        default:
-            break;
-        }
-    }
-    
     if (config_path == NULL)
     {
         printf("Please Specified the config path\n");
@@ -239,13 +225,11 @@ int main(int argc, const char *const *argv, const char *const *env)
     watcher_conf.pid_path = iniparser_getstring(ini, "main:vxlog_pid_path", NULL);
     watcher_conf.interval = iniparser_getint(ini, "main:interval", NULL);
 
-    atexit(exit_action);
-
     apr_thread_t *thd_arr[2];
     apr_threadattr_t *thd_attr;
-    apr_threadattr_create(&thd_attr, mp);
-    apr_thread_create(&thd_arr[0], thd_attr, config_update, 0, mp);
-    apr_thread_create(&thd_arr[1], thd_attr, vxlog_monit, 1, mp);
+    apr_threadattr_create(&thd_attr, boot.mp);
+    apr_thread_create(&thd_arr[0], thd_attr, config_update, 0, boot.mp);
+    apr_thread_create(&thd_arr[1], thd_attr, vxlog_monit, 1, boot.mp);
 
     int i;
     for (i = 0; i < 2; i++)
@@ -253,5 +237,8 @@ int main(int argc, const char *const *argv, const char *const *env)
         rv = apr_thread_join(&rv, thd_arr[i]);
         assert(rv == APR_SUCCESS);
     }
+
+    iniparser_freedict(ini);
+
     return 0;
 }
