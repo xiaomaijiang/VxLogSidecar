@@ -70,42 +70,31 @@ int on_body(http_parser *parse, const char *at, size_t length)
 
         apr_size_t nbytes = 4096;
         char *str = apr_pcalloc(boot.mp, nbytes + 1);
-
         if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_CREATE,
                                APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
         {
-            rv = apr_file_read(conf_file, str, &nbytes);
+            apr_file_read(conf_file, str, &nbytes);
 
             apr_file_close(conf_file);
-            if (rv != APR_SUCCESS)
+            if (apr_strnatcmp(str, at) != 0)
             {
-                umr_log("read local config failed", boot.mp);
-            }
-            else
-            {
-                if (strcmp(str, at) == 0)
+                umr_log("start VxLog", boot.mp);
+                system(watcher_conf.shutdown_script_path);
+
+                umr_log("config is changed,upgrade local VxLOG config", boot.mp);
+                if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
+                                       APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
+                                       APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
                 {
+                    rv = apr_file_write(conf_file, at, &length);
+                    umr_log("Upgrade local config success", boot.mp);
                 }
                 else
                 {
-                    umr_log("start VxLog", boot.mp);
-                    system(watcher_conf.shutdown_script_path);
-
-                    umr_log("config is changed,upgrade local VxLOG config", boot.mp);
-                    if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
-                                           APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
-                                           APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
-                    {
-                        rv = apr_file_write(conf_file, at, &length);
-                        umr_log("Upgrade local config success", boot.mp);
-                    }
-                    else
-                    {
-                        umr_log("Upgrade local config failed", boot.mp);
-                    }
-                    apr_file_close(conf_file);
+                    umr_log("Upgrade local config failed", boot.mp);
                 }
+                apr_file_close(conf_file);
             }
         }
     }
@@ -162,6 +151,7 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
         {
             umr_log("Connect Server fail", boot.mp);
         }
+
         apr_sleep(watcher_conf.interval * APR_USEC_PER_SEC);
         apr_socket_close(s);
     }
@@ -227,7 +217,7 @@ int main(int argc, const char *const *argv, const char *const *env)
     }
 
     umr_log("init config properties", boot.mp);
-
+    init_config();
     apr_thread_t *thd_arr[2];
     apr_threadattr_t *thd_attr;
     apr_threadattr_create(&thd_attr, boot.mp);
