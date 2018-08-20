@@ -80,7 +80,7 @@ int on_body(http_parser *parse, const char *at, size_t length)
             apr_file_close(conf_file);
             if (rv != APR_SUCCESS)
             {
-                printf("read local config failed\n");
+                umr_log("read local config failed",boot.mp);
             }
             else
             {
@@ -89,20 +89,20 @@ int on_body(http_parser *parse, const char *at, size_t length)
                 }
                 else
                 {
-                    printf("start VxLog\n");
+                    umr_log("start VxLog", boot.mp);
                     system(watcher_conf.shutdown_script_path);
 
-                    printf("config is changed,upgrade local VxLOG config\n");
+                    umr_log("config is changed,upgrade local VxLOG config", boot.mp);
                     if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                            APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
                                            APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
                     {
                         rv = apr_file_write(conf_file, at, &length);
-                        printf("Upgrade local config success\n");
+                        umr_log("Upgrade local config success", boot.mp);
                     }
                     else
                     {
-                        printf("Upgrade local config failed\n");
+                        umr_log("Upgrade local config failed", boot.mp);
                     }
                     apr_file_close(conf_file);
                 }
@@ -155,12 +155,12 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
             rv = do_client_task(s, watcher_conf.url_path, boot.mp);
             if (rv != APR_SUCCESS)
             {
-                printf("Request latest VxLog Config failed\n");
+                umr_log("Request latest VxLog Config failed", boot.mp);
             }
         }
         else
         {
-            printf("Connect Server fail\n");
+            umr_log("Connect Server fail", boot.mp);
         }
         apr_sleep(watcher_conf.interval * APR_USEC_PER_SEC);
         apr_socket_close(s);
@@ -178,7 +178,7 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
                                APR_FOPEN_READ,
                                APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) != APR_SUCCESS)
         {
-            printf("VxLog is not started ,start VxLOG\n");
+            umr_log("VxLog is not started ,start VxLOG",boot.mp);
             system(watcher_conf.startup_script_path);
         }
 
@@ -192,7 +192,7 @@ void args_init_callback(char ch, const char *optarg)
     {
     case 'c':
         config_path = optarg;
-        printf("Config Path is :%s\n", optarg);
+        umr_log(apr_pstrcat(boot.mp, "Config Path is :", config_path, NULL), boot.mp);
         break;
     case 'd':
         break;
@@ -205,14 +205,13 @@ int main(int argc, const char *const *argv, const char *const *env)
 {
     boot_app(&boot, argc, argv, env);
     args_init(boot.mp, "c:", argc, argv, args_init_callback);
-
     if (config_path == NULL)
     {
-        printf("Please Specified the config path\n");
+        umr_log("Please Specified the config path", boot.mp);
         exit(-1);
     }
+    umr_log("init config properties", boot.mp);
 
-    printf("init config properties\n");
     ini = iniparser_load(config_path);
     iniparser_dump(ini, stderr);
 

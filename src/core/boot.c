@@ -11,6 +11,32 @@ void exit_action()
     apr_terminate();
 }
 
+char *format_time(apr_pool_t *pool, const apr_time_exp_t *xt, const char *format)
+{
+    return apr_psprintf(pool,
+                        format,
+                        xt->tm_year + 1900,
+                        xt->tm_mon + 1,
+                        xt->tm_mday,
+                        xt->tm_hour,
+                        xt->tm_min,
+                        xt->tm_sec,
+                        xt->tm_usec,
+                        xt->tm_gmtoff,
+                        xt->tm_yday + 1,
+                        apr_day_snames[xt->tm_wday],
+                        (xt->tm_isdst ? " DST" : ""));
+}
+
+apr_time_exp_t current_exp_time()
+{
+    apr_time_t current_time;
+    apr_time_exp_t exp_time;
+    current_time = apr_time_now();
+    apr_time_exp_gmt(&exp_time, current_time);
+    return exp_time;
+}
+
 void boot_app(umr_boot_t *umr_boot, int argc, const char *const *argv, const char *const *env)
 {
     if (apr_app_initialize(&argc, &argv, &env) != APR_SUCCESS)
@@ -65,19 +91,8 @@ void repl_console(apr_pool_t *mp, void (*callback)())
     }
 }
 
-char *print_time(apr_pool_t *pool, const apr_time_exp_t *xt)
+void umr_log(char *log_info,apr_pool_t *mp)
 {
-    return apr_psprintf(pool,
-                        "%04d-%02d-%02d %02d:%02d:%02d.%06d %+05d [%d %s]%s",
-                        xt->tm_year + 1900,
-                        xt->tm_mon + 1,
-                        xt->tm_mday,
-                        xt->tm_hour,
-                        xt->tm_min,
-                        xt->tm_sec,
-                        xt->tm_usec,
-                        xt->tm_gmtoff,
-                        xt->tm_yday + 1,
-                        apr_day_snames[xt->tm_wday],
-                        (xt->tm_isdst ? " DST" : ""));
+    apr_time_exp_t current_time = current_exp_time();
+    printf("[%s]:%s\n", format_time(mp, &current_time, "%04d-%02d-%02d %02d:%02d:%02d.%06d"),log_info);
 }

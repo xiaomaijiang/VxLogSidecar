@@ -31,4 +31,8 @@ void args_init(apr_pool_t *mp, const char *arg_configs, int argc, const char *co
 
 void repl_console(apr_pool_t *mp, void (*callback)());
 
-char *print_time(apr_pool_t *pool, const apr_time_exp_t *xt);
+char *format_time(apr_pool_t *pool, const apr_time_exp_t *xt, const char *format);
+
+apr_time_exp_t current_exp_time();
+
+void umr_log(char *log_info,apr_pool_t *mp);
