@@ -84,6 +84,7 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
         else
         {
             zlog_info(log_category, "Init Curl fail");
+            exit(-1);
         }
 
         apr_sleep(watcher_conf.interval * APR_USEC_PER_SEC);
