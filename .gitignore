@@ -22,3 +22,4 @@ startup.sh
 shutdown.sh
 vxlog.conf
 watcher.conf
+src/core/VxLogSideCar

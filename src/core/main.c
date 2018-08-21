@@ -146,14 +146,14 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
             {
                 umr_log("Request latest VxLog Config failed", boot.mp);
             }
+            apr_socket_close(s);
         }
         else
         {
             umr_log("Connect Server fail", boot.mp);
         }
-
+        
         apr_sleep(watcher_conf.interval * APR_USEC_PER_SEC);
-        apr_socket_close(s);
     }
 }
 
