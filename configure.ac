@@ -9,7 +9,7 @@ AM_INIT_AUTOMAKE(foreign -Wall)
 AC_CONFIG_SRCDIR([src/core/main.c])
 AC_CONFIG_HEADERS([config.h])
 
-AC_CHECK_LIB(zlog,zlog_version,[],[
+AC_CHECK_LIB(zlog,zlog_fini,[],[
 echo “Error! You need to have libzlog installed!”
 exit -1
 ])
