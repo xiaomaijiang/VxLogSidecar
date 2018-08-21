@@ -1,6 +1,9 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to 1 if you have the `curl' library (-lcurl). */
+#define HAVE_LIBCURL 1
+
 /* Define to 1 if you have the `zlog' library (-lzlog). */
 #define HAVE_LIBZLOG 1
 

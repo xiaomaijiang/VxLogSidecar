@@ -9,6 +9,11 @@ AM_INIT_AUTOMAKE(foreign -Wall)
 AC_CONFIG_SRCDIR([src/core/main.c])
 AC_CONFIG_HEADERS([config.h])
 
+AC_CHECK_LIB(curl,curl_easy_init,[],[
+echo “Error! You need to have libcurl installed!”
+exit -1
+])
+
 AC_CHECK_LIB(zlog,zlog_fini,[],[
 echo “Error! You need to have libzlog installed!”
 exit -1
@@ -34,7 +39,7 @@ APR_CFLAGS=`$apr_config --cppflags`
 CFLAGS="$CFLAGS $APR_CFLAGS  "
 
 APR_LDFLAGS=`$apr_config --ldflags`
-LDFLAGS="$LDFLAGS $APR_LDFLAGS -lzlog"
+LDFLAGS="$LDFLAGS $APR_LDFLAGS -lzlog -lcurl"
 
 APR_INCLUDES=`$apr_config --includes`
 INCLUDES="$INCLUDES $APR_INCLUDES"
