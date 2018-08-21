@@ -9,6 +9,11 @@ AM_INIT_AUTOMAKE(foreign -Wall)
 AC_CONFIG_SRCDIR([src/core/main.c])
 AC_CONFIG_HEADERS([config.h])
 
+AC_CHECK_LIB(zlog,zlog_version,[],[
+echo “Error! You need to have libzlog installed!”
+exit -1
+])
+
 # APR
 AC_ARG_VAR([APRCONFIG], [apr-1-config tool with path])
 
@@ -29,7 +34,7 @@ APR_CFLAGS=`$apr_config --cppflags`
 CFLAGS="$CFLAGS $APR_CFLAGS  "
 
 APR_LDFLAGS=`$apr_config --ldflags`
-LDFLAGS="$LDFLAGS $APR_LDFLAGS "
+LDFLAGS="$LDFLAGS $APR_LDFLAGS -lzlog"
 
 APR_INCLUDES=`$apr_config --includes`
 INCLUDES="$INCLUDES $APR_INCLUDES"
