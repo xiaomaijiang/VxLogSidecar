@@ -33,22 +33,26 @@ size_t static config_get_callback(void *buffer,
 {
     apr_size_t nbytes = 4096;
     size_t size_cal = (size_t)(size * nmemb);
-    char **response_ptr = (char **)userp;
+
     char *str = apr_pcalloc(boot.mp, nbytes + 1);
+
     if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
-                           APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_CREATE,
-                           APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
+                           APR_FOPEN_READ | APR_FOPEN_CREATE,
+                           APR_FPROT_UREAD, boot.mp) == APR_SUCCESS)
     {
         apr_file_read(conf_file, str, &nbytes);
+
         apr_file_close(conf_file);
+
         if (apr_strnatcmp(str, (char *)buffer) != 0)
         {
-            zlog_info(log_category, "start VxLog");
+            zlog_info(log_category, "Exec VxLog start script");
             system(watcher_conf.shutdown_script_path);
+
             zlog_info(log_category, "config is changed,upgrade local VxLOG config");
             if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
                                    APR_FOPEN_READ | APR_FOPEN_WRITE | APR_FOPEN_TRUNCATE,
-                                   APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) == APR_SUCCESS)
+                                   APR_FPROT_UREAD | APR_FPROT_UWRITE, boot.mp) == APR_SUCCESS)
             {
                 rv = apr_file_write(conf_file, (char *)buffer, &size_cal);
                 apr_file_close(conf_file);
@@ -60,21 +64,20 @@ size_t static config_get_callback(void *buffer,
             }
         }
     }
-    *response_ptr = strndup(buffer, (size_t)(size * nmemb));
     return ((size_t)(size * nmemb));
 }
 
 static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
 {
     curl = curl_easy_init();
+    curl_easy_setopt(curl, CURLOPT_URL, watcher_conf.url);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, config_get_callback);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     while (1)
     {
-
         if (curl)
         {
-            curl_easy_setopt(curl, CURLOPT_URL, watcher_conf.url);
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, config_get_callback);
-            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
             res = curl_easy_perform(curl);
             if (res != CURLE_OK)
             {
@@ -117,8 +120,6 @@ void args_init_callback(char ch, const char *optarg)
     case 'c':
         config_path = optarg;
         zlog_info(log_category, apr_pstrcat(boot.mp, "Config Path is :", config_path, NULL));
-        break;
-    case 'd':
         break;
     default:
         break;
