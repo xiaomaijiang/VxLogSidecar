@@ -169,7 +169,8 @@ int main(int argc, const char *const *argv, const char *const *env)
     apr_thread_create(&thd_arr[0], thd_attr, config_update, 0, boot.mp);
     apr_thread_create(&thd_arr[1], thd_attr, vxlog_monit, 1, boot.mp);
 
-    for (int i = 0; i < 2; i++)
+    int i;
+    for (i = 0; i < 2; i++)
     {
         rv = apr_thread_join(&rv, thd_arr[i]);
         assert(rv == APR_SUCCESS);
