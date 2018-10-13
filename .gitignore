@@ -23,3 +23,7 @@ shutdown.sh
 vxlog.conf
 watcher.conf
 src/core/VxLogSideCar
+CMakeFiles
+cmake_install*
+CMakeCache*
+.idea
