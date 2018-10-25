@@ -31,7 +31,7 @@ size_t static config_get_callback(void *buffer,
                                   size_t nmemb,
                                   void *userp)
 {
-    apr_size_t nbytes = 4096;
+    apr_size_t nbytes = 1048576;
     size_t size_cal = (size_t)(size * nmemb);
 
     char *str = apr_pcalloc(boot.mp, nbytes + 1);
@@ -142,6 +142,7 @@ void init_config()
 
 int main(int argc, const char *const *argv, const char *const *env)
 {
+    //初始化ZLog
     if (zlog_init("zlog.conf"))
     {
         printf("init zlog failed\n");

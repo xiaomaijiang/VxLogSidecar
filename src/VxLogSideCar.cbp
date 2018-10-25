@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="VxLogSideCar"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\src\;CMake Files\src\core\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="VxLogSideCar">
+				<Option output="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/VxLogSideCar" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/apr-1"/>
+					<Add directory="/usr/local/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 VxLogSideCar"/>
+					<CompileFile command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="VxLogSideCar/fast">
+				<Option output="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/VxLogSideCar" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/apr-1"/>
+					<Add directory="/usr/local/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 VxLogSideCar/fast"/>
+					<CompileFile command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/local/bin/gmake -f &quot;/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/boot.c">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/boot.h">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/dictionary.c">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/dictionary.h">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/iniparser.c">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/iniparser.h">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/main.c">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/main.h">
+			<Option target="VxLogSideCar"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="/Users/wuwenhao/Documents/codes/C/VxLogSidecar/src/core/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\core\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
