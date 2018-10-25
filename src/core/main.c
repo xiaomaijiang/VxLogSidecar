@@ -33,7 +33,7 @@ size_t static config_get_callback(void *buffer,
 {
     apr_size_t nbytes = 1048576;
     size_t size_cal = (size_t)(size * nmemb);
-
+    zlog_info(log_category, "alloc size for compare config");
     char *str = apr_pcalloc(boot.mp, nbytes + 1);
 
     if (rv = apr_file_open(&conf_file, watcher_conf.conf_path,
@@ -43,7 +43,7 @@ size_t static config_get_callback(void *buffer,
         apr_file_read(conf_file, str, &nbytes);
 
         apr_file_close(conf_file);
-
+        
         if (apr_strnatcmp(str, (char *)buffer) != 0)
         {
             zlog_info(log_category, "Exec VxLog start script");
@@ -76,6 +76,7 @@ static void *APR_THREAD_FUNC config_update(apr_thread_t *thd, void *data)
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     while (1)
     {
+        zlog_info(log_category, "fetch remote config");
         if (curl)
         {
             res = curl_easy_perform(curl);
@@ -102,7 +103,7 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
         apr_sleep(60 * APR_USEC_PER_SEC);
         apr_status_t rv;
         apr_file_t *pid_file = NULL;
-
+        zlog_info(log_category, "start minitor VXLog Config");
         if (rv = apr_file_open(&pid_file, watcher_conf.pid_path,
                                APR_FOPEN_READ,
                                APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) != APR_SUCCESS)
