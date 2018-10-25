@@ -43,7 +43,7 @@ size_t static config_get_callback(void *buffer,
         apr_file_read(conf_file, str, &nbytes);
 
         apr_file_close(conf_file);
-        
+
         if (apr_strnatcmp(str, (char *)buffer) != 0)
         {
             zlog_info(log_category, "Exec VxLog start script");
@@ -108,9 +108,12 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
                                APR_FOPEN_READ,
                                APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) != APR_SUCCESS)
         {
-            apr_file_close(watcher_conf.pid_path);
             zlog_info(log_category, "VxLog is not started ,start VxLOG");
             system(watcher_conf.startup_script_path);
+        }
+        else
+        {
+            apr_file_close(watcher_conf.pid_path);
         }
     }
 }
