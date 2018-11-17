@@ -108,12 +108,13 @@ static void *APR_THREAD_FUNC vxlog_monit(apr_thread_t *thd, void *data)
                                APR_FOPEN_READ,
                                APR_UREAD | APR_UWRITE | APR_GREAD, boot.mp) != APR_SUCCESS)
         {
+            
             zlog_info(log_category, "VxLog is not started ,start VxLOG");
             system(watcher_conf.startup_script_path);
         }
         else
         {
-            apr_file_close(watcher_conf.pid_path);
+            apr_file_close(pid_file);
         }
     }
 }
